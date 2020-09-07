@@ -1,0 +1,4 @@
+timetable - to get today's timetable
+tomorrow - to get tomorrow timetable
+currentclass - to get current live class
+nextclass - to get next class

@@ -1,13 +1,12 @@
 import configparser as cfg
-import json
 import logging
-import requests
 
-from timetable import Semester
+from semester import Semester, timings
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, Updater
 from telegram.replykeyboardmarkup import ReplyKeyboardMarkup
 from telegram.replykeyboardremove import ReplyKeyboardRemove
+from Time import day_of_week, curr_time
 
 
 def get_token(config):
@@ -17,34 +16,7 @@ def get_token(config):
 
 
 TOKEN = get_token("config.ini")
-getTime = "http://worldtimeapi.org/api/timezone/Asia/Kolkata"
-subjects = Semester.get_subjects()
 tt = Semester.get_timetable()
-timings = ['10-11: ', '11-12: ', '12-01: ', '02-03: ', '03-04: ']
-
-
-def get_url(url):
-    response = requests.get(url)
-    content = response.content.decode("utf8")
-    return content
-
-
-def get_json_from_url(url):
-    content = get_url(url)
-    js = json.loads(content)
-    return js
-
-
-def day_of_week():
-    day = get_json_from_url(getTime)
-    return day["day_of_week"]
-
-
-def curr_time():
-    day = get_json_from_url(getTime)
-    time = day['datetime']
-    t = int(time[11:13])
-    return t
 
 
 def class_no(t):
@@ -69,7 +41,7 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     return menu
 
 
-def start(update, context):
+def start(update):
     kbd_layout = [["/timetable", "/tomorrow"],
                   ['/currentclass', '/nextclass'],
                   ['/close']]
@@ -85,7 +57,7 @@ def start(update, context):
     )
 
 
-def close(update, context):
+def close(update):
     reply_markup = ReplyKeyboardRemove()
     update.message.reply_text(text="Ok! Send commands by typing.", reply_markup=reply_markup)
     pass
@@ -98,12 +70,15 @@ def timetable(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id, text="No Class today. Enjoy : )")
         return
     tt_ = tt[today - 1]
+    
     for i, each in enumerate(tt_):
-        button_list.append(InlineKeyboardButton(timings[i]+'  '+each[0], url=each[1]))
+        button_list.append(InlineKeyboardButton(timings[i] + ' ' + each[0], url=each[1]))
     reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=3))
-    context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Today's Timetable:",
-                             reply_markup=reply_markup)
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Today's Timetable:",
+        reply_markup=reply_markup
+    )
 
 
 def tomorrow(update, context):
@@ -114,7 +89,7 @@ def tomorrow(update, context):
         return
     tt_ = tt[today]
     for i, each in enumerate(tt_):
-        button_list.append(InlineKeyboardButton(timings[i]+'  '+each[0], url=each[1]))
+        button_list.append(InlineKeyboardButton(timings[i] + ' ' + each[0], url=each[1]))
     reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=3))
     context.bot.send_message(
         chat_id=update.message.chat_id,
@@ -128,6 +103,7 @@ def currentclass(update, context):
     c = curr_time()
     c = class_no(c)
     button_list = []
+        
     if today == 0:
         context.bot.send_message(chat_id=update.effective_chat.id, text="No Class today. Enjoy : )")
         return
@@ -135,8 +111,8 @@ def currentclass(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id, text="No class live. Classes will start at 10AM.")
         return
     elif 1 <= c <= 3:
-        tt_ = tt[today-1][c-1]
-        button_list.append(InlineKeyboardButton(timings[c-1] + '  ' + tt_[0], url=tt_[1]))
+        tt_ = tt[c - 1][c - 1]
+        button_list.append(InlineKeyboardButton(timings[c - 1] + ' ' + tt_[0], url=tt_[1]))
         reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
             chat_id=update.message.chat_id,
@@ -151,8 +127,8 @@ def currentclass(update, context):
         )
         return
     elif 5 <= c <= 6:
-        tt_ = tt[today - 1][c - 2]
-        button_list.append(InlineKeyboardButton(timings[c - 2] + '  ' + tt_[0], url=tt_[1]))
+        tt_ = tt[c - 1][c - 2]
+        button_list.append(InlineKeyboardButton(timings[c - 2] + ' ' + tt_[0], url=tt_[1]))
         reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
             chat_id=update.message.chat_id,
@@ -176,14 +152,26 @@ def currentclass(update, context):
 def nextclass(update, context):
     today = day_of_week()
     c = curr_time()
-    c = class_no(c) + 1
+    c = class_no(c)
+    if c != 7:
+        c += 1
     button_list = []
     if today == 0:
         context.bot.send_message(chat_id=update.effective_chat.id, text="No Class today. Enjoy : )")
         return
-    elif 1 <= c <= 3:
+    elif c == 1:
         tt_ = tt[today - 1][c - 1]
-        button_list.append(InlineKeyboardButton(timings[c - 1] + '  ' + tt_[0], url=tt_[1]))
+        button_list.append(InlineKeyboardButton(timings[c - 1] + ' ' + tt_[0], url=tt_[1]))
+        reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
+        context.bot.send_message(
+            chat_id=update.message.chat_id,
+            text="Next Class at 10AM:",
+            reply_markup=reply_markup
+        )
+        return
+    elif 2 <= c <= 3:
+        tt_ = tt[today - 1][c - 1]
+        button_list.append(InlineKeyboardButton(timings[c - 1] + ' ' + tt_[0], url=tt_[1]))
         reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
             chat_id=update.message.chat_id,
@@ -192,14 +180,18 @@ def nextclass(update, context):
         )
         return
     elif c == 4:
+        tt_ = tt[today - 1][c - 1]
+        button_list.append(InlineKeyboardButton(timings[c - 1] + ' ' + tt_[0], url=tt_[1]))
+        reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="No next class. Lunch time."
+            chat_id=update.message.chat_id,
+            text="Next Class at 2PM:",
+            reply_markup=reply_markup
         )
         return
     elif 5 <= c <= 6:
         tt_ = tt[today - 1][c - 2]
-        button_list.append(InlineKeyboardButton(timings[c - 2] + '  ' + tt_[0], url=tt_[1]))
+        button_list.append(InlineKeyboardButton(timings[c - 2] + ' ' + tt_[0], url=tt_[1]))
         reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
             chat_id=update.message.chat_id,
@@ -207,16 +199,24 @@ def nextclass(update, context):
             reply_markup=reply_markup
         )
         return
-    elif 7 <= c <=8 and today != 6:
+    elif c == 7 and today != 6:
+        tt_ = tt[today][0]
+        button_list.append(InlineKeyboardButton(timings[0] + ' ' + tt_[0], url=tt_[1]))
+        reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="No next class. See you tomorrow : )"
+            chat_id=update.message.chat_id,
+            text="No next class today. Next Class tomorrow at 10AM:",
+            reply_markup=reply_markup
         )
         return
     else:
+        tt_ = tt[1][0]
+        button_list.append(InlineKeyboardButton(timings[0] + ' ' + tt_[0], url=tt_[1]))
+        reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="No next class. See you on Monday."
+            chat_id=update.message.chat_id,
+            text="No next class today. Next Class on Monday at 10AM:",
+            reply_markup=reply_markup
         )
 
 

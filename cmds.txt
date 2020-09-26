@@ -1,7 +1,6 @@
 timetable - to get today's timetable
 tomorrow - to get tomorrow timetable
-currentclass - to get current live class
-nextclass - to get next class
+current - to get current live class
+next - to get next class
 start - to get started
 help - to get started
-close - to close reply keyboard

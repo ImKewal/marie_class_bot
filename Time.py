@@ -23,6 +23,8 @@ def date():
     y = time[2:4]
     a = ['AM', 'PM']
     H = str(int(time[11:13]) % 12)
+    if H == '0':
+        H = '12'
     M = time[14:16]
     ampm = a[int(time[11:13]) // 12]
     return f"{d}.{m}.{y} - {H}:{M} {ampm}"

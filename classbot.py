@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 FIRST = 0
 ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE = range(9)
 TOKEN = get_token("config.ini")
-flag = False
+# flag = False
 
 
 class Message:
@@ -138,12 +138,12 @@ class Global:
         return m
     
     def anti_spam(self):
-        global flag
-        if flag is True:
-            flag = False
-        elif self.update.message.chat.type == 'supergroup':
-            for i in self.messages.values():
-                i.remove(self.context)
+        # global flag
+        # if flag is True:
+        #     flag = False
+        # else:  # self.update.message.chat.type == 'supergroup':
+        for i in self.messages.values():
+            i.remove(self.context)
     
     def updated(self):
         first_name = self.update.callback_query.from_user.first_name
@@ -174,8 +174,9 @@ class Global:
                 reply_markup=reply_markup,
                 reply_to_message_id=self.update.message.message_id
             )
-            self.messages[self.cmd].insert(self.make_message(t))
-            self.anti_spam()
+            if self.update.message.chat.type != 'private':
+                self.messages[self.cmd].insert(self.make_message(t))
+                self.anti_spam()
         else:
             chat_id = self.update.message.from_user.id
             try:
@@ -193,7 +194,7 @@ class Global:
                     self.messages[self.cmd].insert(self.make_message(t))
                     self.anti_spam()
             except error.Unauthorized:
-                flag = True
+                # flag = True
                 self.cmd = 'error'
                 m = self.context.bot.send_message(
                     chat_id=self.update.effective_chat.id,

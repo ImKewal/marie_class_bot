@@ -35,7 +35,7 @@ Telegram bot to get timetable classes and their meet links
 
 - change number of classes (`noc`) in [`Time.py`](Time.py).`day_of_week()` for each day (0==sunday, ... 6==saturday)
 
-- insert your bot token in the [`config.ini`](config.ini) in place of `<bot-token>`
+- Rename [`tempelate-config.ini`](TempelateConfig.ini) to config.ini and insert your bot token in the renamed [`config.ini`](TempelateConfig.ini) file in place of `<bot-token>`
 
 - crosscheck code to work with your timetable
 

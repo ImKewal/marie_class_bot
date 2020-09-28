@@ -1,5 +1,6 @@
 import configparser as cfg
 import logging
+import warnings
 from typing import List
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import error, Message as Mes
@@ -8,16 +9,13 @@ from telegram.ext.callbackcontext import CallbackContext
 from telegram.ext.callbackqueryhandler import CallbackQueryHandler
 from telegram.update import Update
 from Time import day_of_week, date, curr_time
-from semester import Semester, timings, class_no, noc
+from semester import Semester, timings, class_no
 
 
 def build_menu(tt, c=0, n=3, header_buttons=None, footer_buttons=None):
     button_list = []
     if c == 0:
         for key, value in tt.items():
-            # if 0 <= i <= 2:
-            #     index = i + 1
-            # elif 3 <= i <= 4
             button_list.append(InlineKeyboardButton(timings[key] + ' ' + value[0], url=value[1]))
     elif 1 <= c <= 3 or 5 <= c <= 6:
         button_list.append(InlineKeyboardButton(timings[c] + ' ' + tt[0], url=tt[1]))
@@ -41,7 +39,7 @@ logger = logging.getLogger(__name__)
 FIRST = 0
 ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE = range(9)
 TOKEN = get_token("config.ini")
-# flag = False
+warnings.filterwarnings("ignore")
 
 
 class Message:
@@ -81,12 +79,9 @@ class Global:
     update: Update = None
     context: CallbackContext = None
     query = None
-    
-    def __init__(self):
-        self.tt = Semester.get_timetable()
+    tt = {}
     
     def get_string_dict(self):
-        
         if self.cmd == 'start':
             s = "Select option:"
             return s
@@ -110,7 +105,9 @@ class Global:
         self.update = update
         self.context = context
         self.cmd = cmd
-        today: int = day_of_week()
+        if self.tt != Semester.get_timetable():
+            self.tt = Semester.get_timetable()
+        today, noc = day_of_week()
         c = class_no(curr_time())
         s = self.get_string_dict()
         if noc < 5:
@@ -138,10 +135,6 @@ class Global:
         return m
     
     def anti_spam(self):
-        # global flag
-        # if flag is True:
-        #     flag = False
-        # else:  # self.update.message.chat.type == 'supergroup':
         for i in self.messages.values():
             i.remove(self.context)
     
@@ -159,7 +152,6 @@ class Global:
         print(command, "updated without change -", first_name, last_name, f"- {date()}")
     
     def send(self, text, keyboard=None, to_user=False):
-        global flag
         
         if keyboard is not None:
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -194,7 +186,6 @@ class Global:
                     self.messages[self.cmd].insert(self.make_message(t))
                     self.anti_spam()
             except error.Unauthorized:
-                # flag = True
                 self.cmd = 'error'
                 m = self.context.bot.send_message(
                     chat_id=self.update.effective_chat.id,
@@ -206,7 +197,6 @@ class Global:
                 self.anti_spam()
     
     def edit(self, text, keyboard):
-        
         if keyboard is None:
             reply_markup = None
         else:

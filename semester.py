@@ -11,7 +11,7 @@ subjects = [
     ["Project", "NA"]
 ]
 codes = ['BCE-C501', 'BCE-C502', 'BCE-C503', 'BCE-C504', 'BCE-C505', 'BET-C505', 'BCE-C551', 'BCE-C552', 'BET-C553', 'BCE-C560']
-timings = {1: '10-11  ', 2: '11-12  ', 3: '12-1  ', 4: '1-2  ', 5: '2-3  ', 6: '3-4:30  '}
+timings = {1: '10-11  ', 2: '11-12  ', 3: '12-1  ', 4: '1-2  ', 5: '2-3  ', 6: '3-4  '}
 
 
 def import_timetable(file):

@@ -1,18 +1,30 @@
 # marie_class_bot
 Telegram bot to get timetable classes and their meet links
 
+-This project requires following python modules installed:
+    # requests
+    # python-telegram-bot
+
+# configuring bot acc to you:
+
 -First of all add timetable in tt.txt in this format:
-  #First word of each line day.
-  #next 5 words separated with spaces indicating each subject code
+    # First word of each line == day.
+    # next words separated with spaces indicating each subject code
 
--now configure timetable.py according to the tt.txt
+-now configure semester.py according to the tt.txt 
+    # sub-codes, 
+    # subjects in same sequence of sub-codes and their meet links, 
+    # class no (0 for before classes, 1-6 for 6 classes, 7 for after classes}), 
+    # and change import_timetable() to make timetable dictionary {day_no:{class_no:[subject, "meetlink], [sub, "meetlink"], ...}, day_no: ...} here day_no = 1 for
+      Monday, 2 for Tuesday, ... 6 for saturday.
 
--insert bot token in the config.ini in place of <bot-token>
+-change number of classes (noc) in Time.py/.day_of_week() for each day (0==sunday, ... 6==saturday)
 
-crosscheck code to work with your timetable
+-insert your bot token in the config.ini in place of <bot-token>
 
-run classbot.py with python3
+-crosscheck code to work with your timetable
 
-This project requires following python modules installed:
-  -requests
-  -python-telegram-bot
+run classbot.py with python3 and viola your bot is running
+This bot will change timetable automatically as you replace tt.txt with new tt.txt timetable file. No need to restart bot. Please use update button to update current message timetables.
+
+refer to the commands.txt for the current supported commands

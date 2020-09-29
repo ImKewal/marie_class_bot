@@ -92,9 +92,9 @@ class Global:
             s = {1: "No Class tomorrow   ; )", 2: "Tomorrow's Timetable:"}
             return s
         elif self.cmd == 'current':
-            s = {1: "No Class today. Enjoy : )", 2: "No class live. Classes will start at 10AM.", 3: "Current Class:",
-                 4: "Lunch Time", 5: "Current Class:", 6: "Classes over. See you tomorrow : )",
-                 7: "Classes over. See you on Monday."}
+            s = {1: "No Class today. Enjoy : )", 2: "No class live. \nClasses will start at 10AM.", 3: "Current Class:",
+                 4: "Lunch Time", 5: "Current Class:", 6: "Classes over. \nSee you tomorrow : )",
+                 7: "Classes over. \nSee you on Monday."}
             return s
         elif self.cmd == 'next':
             s = {1: "No Class today. Enjoy : )", 2: "Next Class at 10AM:", 3: "Next Class:", 4: "Next Class at 2PM:",

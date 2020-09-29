@@ -4,7 +4,7 @@ import warnings
 from typing import List
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import error, Message as Mes
-from telegram.ext import CommandHandler, Updater, ConversationHandler
+from telegram.ext import CommandHandler, Updater, ConversationHandler, PicklePersistence
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.ext.callbackqueryhandler import CallbackQueryHandler
 from telegram.update import Update
@@ -550,7 +550,8 @@ def cancel(update, context):
 
 
 def main():
-    updater = Updater(token=TOKEN, use_context=True)
+    pp = PicklePersistence(filename='classbot')
+    updater = Updater(token=TOKEN, persistence=pp, use_context=True)
     dispatcher = updater.dispatcher
     
     start_handler = ConversationHandler(
@@ -579,7 +580,9 @@ def main():
             CommandHandler('current', cancel),
             CommandHandler('next', cancel)
         ],
-        per_user=False
+        per_user=False,
+        name="start_conversation",
+        persistent=True
     )
     
     timetable_handler = ConversationHandler(
@@ -605,7 +608,9 @@ def main():
             CommandHandler('current', cancel),
             CommandHandler('next', cancel)
         ],
-        per_user=False
+        per_user=False,
+        name="timetable_conversation",
+        persistent=True
     )
     
     tomorrow_handler = ConversationHandler(
@@ -631,7 +636,9 @@ def main():
             CommandHandler('current', cancel),
             CommandHandler('next', cancel)
         ],
-        per_user=False
+        per_user=False,
+        name="tomorrow_conversation",
+        persistent=True
     )
     
     current_handler = ConversationHandler(
@@ -657,7 +664,9 @@ def main():
             CommandHandler('current', current_class),
             CommandHandler('next', cancel)
         ],
-        per_user=False
+        per_user=False,
+        name="current_conversation",
+        persistent=True
     )
     
     next_handler = ConversationHandler(
@@ -683,7 +692,9 @@ def main():
             CommandHandler('current', cancel),
             CommandHandler('next', next_class_update)
         ],
-        per_user=False
+        per_user=False,
+        name="next_conversation",
+        persistent=True
     )
     
     dispatcher.add_handler(start_handler, 1)
@@ -693,6 +704,7 @@ def main():
     dispatcher.add_handler(next_handler, 5)
     
     updater.start_polling(clean=True)
+    updater.idle()
 
 
 if __name__ == '__main__':

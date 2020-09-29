@@ -581,7 +581,7 @@ def main():
             CommandHandler('next', cancel)
         ],
         per_user=False,
-        name="start_conversation",
+        name='start_conversation',
         persistent=True
     )
     
@@ -609,7 +609,7 @@ def main():
             CommandHandler('next', cancel)
         ],
         per_user=False,
-        name="timetable_conversation",
+        name='timetable_conversation',
         persistent=True
     )
     
@@ -637,7 +637,7 @@ def main():
             CommandHandler('next', cancel)
         ],
         per_user=False,
-        name="tomorrow_conversation",
+        name='tomorrow_conversation',
         persistent=True
     )
     
@@ -665,7 +665,7 @@ def main():
             CommandHandler('next', cancel)
         ],
         per_user=False,
-        name="current_conversation",
+        name='current_conversation',
         persistent=True
     )
     
@@ -693,7 +693,7 @@ def main():
             CommandHandler('next', next_class_update)
         ],
         per_user=False,
-        name="next_conversation",
+        name='next_conversation',
         persistent=True
     )
     

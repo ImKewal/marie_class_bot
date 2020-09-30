@@ -105,9 +105,14 @@ class Global:
         self.update = update
         self.context = context
         self.cmd = cmd
+        today, n = day_of_week()
+        tomorrows, n = day_of_week(False)
         if self.tt != Semester.get_timetable():
             self.tt = Semester.get_timetable()
-        today, noc = day_of_week()
+        if self.cmd == 'tomorrow':
+            tomorrows, noc = day_of_week(False)
+        else:
+            today, noc = day_of_week()
         c = class_no(curr_time())
         s = self.get_string_dict()
         if noc < 5:
@@ -121,15 +126,17 @@ class Global:
         
         if self.cmd == 'start':
             return s
-        elif self.cmd == 'timetable' or self.cmd == 'tomorrow':
+        elif self.cmd == 'timetable':
             return today, s, n_cols
+        elif self.cmd == 'tomorrow':
+            return tomorrows, s, n_cols
         elif self.cmd == 'current' or self.cmd == 'next':
             return today, c, s
     
     def make_message(self, b_m: Mes):
         m = Message()
-        m.u_m_c = self.update.message.chat.id
-        m.u_m = self.update.message.message_id
+        m.u_m_c = self.update.effective_chat.id
+        m.u_m = self.update.effective_message.message_id
         m.b_m = b_m.message_id
         m.b_m_c = b_m.chat.id
         return m
@@ -139,8 +146,8 @@ class Global:
             i.remove(self.context)
     
     def updated(self):
-        first_name = self.update.callback_query.from_user.first_name
-        last_name = self.update.callback_query.from_user.last_name
+        first_name = self.update.effective_user.first_name
+        last_name = self.update.effective_user.last_name
         if last_name is None:
             last_name = '\b'
         if self.cmd == 'current':
@@ -166,18 +173,18 @@ class Global:
                 reply_markup=reply_markup,
                 reply_to_message_id=self.update.message.message_id
             )
-            if self.update.message.chat.type != 'private':
+            if self.update.effective_chat.type != 'private':
                 self.messages[self.cmd].insert(self.make_message(t))
                 self.anti_spam()
         else:
-            chat_id = self.update.message.from_user.id
+            chat_id = self.update.effective_user.id
             try:
                 self.context.bot.send_message(
                     chat_id=chat_id,
                     text=text,
                     reply_markup=reply_markup
                 )
-                if self.update.message.chat.type == 'supergroup':
+                if self.update.effective_chat.type == 'supergroup':
                     t = self.context.bot.send_message(
                         chat_id=self.update.effective_chat.id,
                         text=f'Click on @{self.context.bot.username} to go to PM',
@@ -263,12 +270,7 @@ def one(update, context):
 
 
 def two(update, context):
-    today, s, n = B.set(update, context, 'tomorrow', True)
-    
-    if today != 6:
-        tom = today + 1
-    else:
-        tom = 0
+    tom, s, n = B.set(update, context, 'tomorrow', True)
     
     if tom == 0:
         keyboard = [[InlineKeyboardButton("Close", callback_data=str(FIVE))]]
@@ -376,12 +378,7 @@ def timetable_update(update, context):
 
 
 def tomorrow(update, context):
-    today, s, n = B.set(update, context, 'tomorrow')
-    
-    if today != 6:
-        tom: int = today + 1
-    else:
-        tom: int = 0
+    tom, s, n = B.set(update, context, 'tomorrow')
     
     if tom == 0:
         keyboard = [[InlineKeyboardButton("Update", callback_data=str(SEVEN))]]
@@ -395,12 +392,7 @@ def tomorrow(update, context):
 
 
 def tomorrow_update(update, context):
-    today, s, n = B.set(update, context, 'tomorrow', True)
-    
-    if today != 6:
-        tom: int = today + 1
-    else:
-        tom: int = 0
+    tom, s, n = B.set(update, context, 'tomorrow', True)
     
     if tom == 0:
         keyboard = [[InlineKeyboardButton("Update", callback_data=str(SEVEN))]]

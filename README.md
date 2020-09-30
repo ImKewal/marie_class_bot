@@ -2,8 +2,10 @@
 Telegram bot to get timetable classes and their meet links
 
 * This project requires following python modules installed:
-    1. `requests`
-    2. `python-telegram-bot`
+    1. `pytz`
+    2. `requests`
+    3. `python-telegram-bot`
+    
 
 ####    Configuring bot according to your timetable:
 
@@ -13,7 +15,7 @@ Telegram bot to get timetable classes and their meet links
 
 - Now configure [`semester.py`](semester.py) according to the [`tt.txt`](tt.txt)
     * sub-codes, 
-    * subjects in same sequence of sub-codes and their meet links, 
+    * subjects in same sequence of sub-codes and their google meet links, 
     * class no (0 for before classes, 1-6 for 6 classes, 7 for after classes}), 
     * and change import_timetable() to make timetable dictionary 
         ```
@@ -30,12 +32,12 @@ Telegram bot to get timetable classes and their meet links
                 },
         }
         ```
-        here day_no = 1 for Monday, 2 for Tuesday, ... 6 for saturday
-        and class_no = 1 for 1st class, 2 for 2nd, ...
+        here `day_no = 1` for Monday, `2` for Tuesday, ... `6` for saturday
+        and `class_no = 1` for 1st class, `2` for 2nd, ... skip `class_no` of a day for lunch
 
 - change number of classes (`noc`) in [`Time.py`](Time.py).`day_of_week()` for each day (0==sunday, ... 6==saturday)
 
-- Rename [`tempelate-config.ini`](TempelateConfig.ini) to config.ini and insert your bot token in the renamed [`config.ini`](TempelateConfig.ini) file in place of `<bot-token>`
+- Rename [`TempelateConfig.py`](TempelateConfig.py) to config.py and insert your bot token in the renamed [`config.py`](TempelateConfig.py) file in place of "`<bot-token>`"
 
 - crosscheck code to work with your timetable
 

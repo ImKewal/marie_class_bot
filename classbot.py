@@ -1,4 +1,3 @@
-import configparser as cfg
 import logging
 import warnings
 from typing import List
@@ -10,6 +9,7 @@ from telegram.ext.callbackqueryhandler import CallbackQueryHandler
 from telegram.update import Update
 from Time import day_of_week, date, curr_time
 from semester import Semester, timings, class_no
+from config import TOKEN
 
 
 def build_menu(tt, c=0, n=3, header_buttons=None, footer_buttons=None):
@@ -28,17 +28,10 @@ def build_menu(tt, c=0, n=3, header_buttons=None, footer_buttons=None):
     return menu
 
 
-def get_token(config):
-    parser = cfg.ConfigParser()
-    parser.read(config)
-    return parser.get('creds', 'token')
-
-
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 FIRST = 0
 ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE = range(9)
-TOKEN = get_token("config.ini")
 warnings.filterwarnings("ignore")
 
 
@@ -47,6 +40,7 @@ class Message:
     b_m: int = None
     u_m_c: int = None
     b_m_c: int = None
+    day: int = None
 
 
 class Messages:
@@ -55,15 +49,34 @@ class Messages:
     def __init__(self, message_type):
         self.messages = []
         self.message_type = message_type
+        if message_type == 'day':
+            self.count = {i: 0 for i in range(7)}
+            self.index = 0
     
-    def insert(self, message: Message):
+    def insert(self, message: Message, context: CallbackContext = None):
+        if message.day is not None:
+            self.count[message.day] += 1
+            if len(self.messages) > 0:
+                context.bot.delete_message(self.messages[self.index].u_m_c, self.messages[self.index].u_m)
+                self.index += 1
         self.messages.append(message)
     
     def remove(self, context: CallbackContext):
         if len(self.messages) > 1:
-            context.bot.delete_message(self.messages[0].b_m_c, self.messages[0].b_m)
-            context.bot.delete_message(self.messages[0].u_m_c, self.messages[0].u_m)
-            self.messages.pop(0)
+            if self.message_type == 'day':
+                for key, value in self.count.items():
+                    if value > 1:
+                        for index, mess in enumerate(self.messages):
+                            if mess.day == key:
+                                context.bot.delete_message(mess.b_m_c, mess.b_m)
+                                self.count[mess.day] -= 1
+                                self.messages.pop(index)
+                                self.index -= 1
+                                break
+            else:
+                context.bot.delete_message(self.messages[0].b_m_c, self.messages[0].b_m)
+                context.bot.delete_message(self.messages[0].u_m_c, self.messages[0].u_m)
+                self.messages.pop(0)
 
 
 class Global:
@@ -73,13 +86,19 @@ class Global:
         'timetable': Messages('timetable'),
         'tomorrow': Messages('tomorrow'),
         'current': Messages('current'),
-        'next': Messages('next')
+        'next': Messages('next'),
+        'day': Messages('day')
     }
     cmd = 'error'
     update: Update = None
     context: CallbackContext = None
     query = None
     tt = {}
+    day = {'sun': 0, 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6}
+    txt = {0: ["Sunday's", "on Sunday"], 1: "Monday's",
+           2: "Tuesday's", 3: "Wednesday's",
+           4: "Thursday's", 5: "Friday's", 6: "Saturday's"}
+    tt_day: int = None
     
     def get_string_dict(self):
         if self.cmd == 'start':
@@ -87,6 +106,9 @@ class Global:
             return s
         elif self.cmd == 'timetable':
             s = {1: "No Class today. Enjoy : )", 2: "Today's Timetable:"}
+            return s
+        elif self.cmd == 'day':
+            s = {1: f"No Class {self.txt[0][1]}.", 2: f"{self.txt[self.tt_day]} Timetable:"}
             return s
         elif self.cmd == 'tomorrow':
             s = {1: "No Class tomorrow   ; )", 2: "Tomorrow's Timetable:"}
@@ -105,12 +127,21 @@ class Global:
         self.update = update
         self.context = context
         self.cmd = cmd
-        today, n = day_of_week()
-        tomorrows, n = day_of_week(False)
+        today = day_of_week(flag=False)
+        tomorrows = day_of_week(False, flag=False)
         if self.tt != Semester.get_timetable():
             self.tt = Semester.get_timetable()
         if self.cmd == 'tomorrow':
             tomorrows, noc = day_of_week(False)
+        elif self.cmd == 'day':
+            x = context.args[0]
+            if x in B.day:
+                today, noc = day_of_week(custom_day=B.day[x])
+                self.tt_day = today
+            else:
+                today, noc = day_of_week()
+                self.tt_day = today
+                self.send('Check the spelling of day after /timetable command.\nType /help for help.')
         else:
             today, noc = day_of_week()
         c = class_no(curr_time())
@@ -128,17 +159,21 @@ class Global:
             return s
         elif self.cmd == 'timetable':
             return today, s, n_cols
+        elif self.cmd == 'day':
+            return today, s, n_cols
         elif self.cmd == 'tomorrow':
             return tomorrows, s, n_cols
         elif self.cmd == 'current' or self.cmd == 'next':
             return today, c, s
     
-    def make_message(self, b_m: Mes):
+    def make_message(self, b_m: Mes, day=None):
         m = Message()
         m.u_m_c = self.update.effective_chat.id
         m.u_m = self.update.effective_message.message_id
         m.b_m = b_m.message_id
         m.b_m_c = b_m.chat.id
+        if day is not None:
+            m.day = day
         return m
     
     def anti_spam(self):
@@ -167,14 +202,24 @@ class Global:
         
         if to_user is False:
             chat_id = self.update.effective_chat.id
-            t = self.context.bot.send_message(
-                chat_id=chat_id,
-                text=text,
-                reply_markup=reply_markup,
-                reply_to_message_id=self.update.message.message_id
-            )
+            if self.cmd != 'day':
+                t = self.context.bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    reply_markup=reply_markup,
+                    reply_to_message_id=self.update.message.message_id
+                )
+            else:
+                t = self.context.bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    reply_markup=reply_markup
+                )
             if self.update.effective_chat.type != 'private':
-                self.messages[self.cmd].insert(self.make_message(t))
+                if self.cmd == 'day':
+                    self.messages['day'].insert(self.make_message(t, day=self.tt_day), self.context)
+                else:
+                    self.messages[self.cmd].insert(self.make_message(t))
                 self.anti_spam()
         else:
             chat_id = self.update.effective_user.id
@@ -257,7 +302,6 @@ def start_over(update: Update, context: CallbackContext):
 
 def one(update, context):
     today, s, n = B.set(update, context, 'timetable', True)
-    
     if today == 0:
         keyboard = [[InlineKeyboardButton("Close", callback_data=str(FIVE))]]
         B.edit(s[1], keyboard)
@@ -350,21 +394,37 @@ def four(update, context):
 
 
 def timetable(update, context):
-    today, s, n = B.set(update, context, 'timetable')
+    if len(context.args) > 0:
+        day, s, n = B.set(update, context, 'day')
+        if day == 0:
+            B.send(s[1])
+        else:
+            tt = B.tt[day]
+            keyboard = build_menu(tt, n=n)
+            B.send(s[2], keyboard)
     
-    if today == 0:
-        keyboard = [[InlineKeyboardButton("Update", callback_data=str(SIX))]]
-        B.send(s[1], keyboard)
     else:
-        tt = B.tt[today]
-        keyboard = build_menu(tt, n=n, footer_buttons=[InlineKeyboardButton("Update", callback_data=str(SIX))])
-        B.send(s[2], keyboard)
+        day, s, n = B.set(update, context, 'timetable')
+        if day == 0:
+            keyboard = [[InlineKeyboardButton("Update", callback_data=str(SIX))]]
+            B.send(s[1], keyboard)
+        else:
+            tt = B.tt[day]
+            keyboard = build_menu(tt, n=n, footer_buttons=[InlineKeyboardButton("Update", callback_data=str(SIX))])
+            B.send(s[2], keyboard)
     
     return FIRST
 
 
 def timetable_update(update, context):
     today, s, n = B.set(update, context, 'timetable', True)
+    if context.args is not None:
+        if len(context.args) > 0:
+            x = context.args[0]
+        else:
+            x = 'today'
+        if x in B.day:
+            today = B.day[x]
     
     if today == 0:
         keyboard = [[InlineKeyboardButton("Update", callback_data=str(SIX))]]

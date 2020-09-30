@@ -8,7 +8,7 @@ subjects = [
     ["Java Lab", "https://meet.google.com/lookup/dkohkc6aee?authuser=1&hs=179"],
     ["Cloud Lab", "https://meet.google.com/lookup/d4rlhrurw3?authuser=1&hs=179"],
     ["MP Lap", "https://meet.google.com/lookup/ad7c5qekkz?authuser=1&hs=179"],
-    ["Project", "NA"]
+    ["Project", "https://www.google.com"]
 ]
 codes = ['BCE-C501', 'BCE-C502', 'BCE-C503', 'BCE-C504', 'BCE-C505', 'BET-C505', 'BCE-C551', 'BCE-C552', 'BET-C553', 'BCE-C560']
 timings = {1: '10-11  ', 2: '11-12  ', 3: '12-1  ', 4: '1-2  ', 5: '2-3  ', 6: '3-4  '}

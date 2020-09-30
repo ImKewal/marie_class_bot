@@ -2,7 +2,7 @@ import pytz
 from datetime import datetime
 
 
-def day_of_week(today=True):
+def day_of_week(today=True, custom_day=None, flag=True):
     current = datetime.now(pytz.timezone('Asia/Kolkata'))
     day = current.weekday()
     if today is True:
@@ -10,18 +10,28 @@ def day_of_week(today=True):
             day = 0
         else:
             day += 1
-    if today is False:
+    else:
         if day == 5:
             day = 0
         elif day == 6:
             day = 1
         else:
             day += 2
-    if 1 <= day <= 3:
-        noc = 5
+    if flag is True:
+        if custom_day is None:
+            if 1 <= day <= 3:
+                noc = 5
+            else:
+                noc = 4
+            return day, noc
+        else:
+            if 1 <= custom_day <= 3:
+                noc = 5
+            else:
+                noc = 4
+            return custom_day, noc
     else:
-        noc = 4
-    return day, noc
+        return day
 
 
 def curr_time():

@@ -1,6 +1,14 @@
-timetable - to get today's timetable
-tomorrow - to get tomorrow timetable
-current - to get current live class
-next - to get next class
-start - to get started
-help - to get started
+/timetable - to get today's timetable
+/timetable <day> - to get timetable of <day> specified below:
+        mon - for Monday,
+        tue - for Tuesday,
+        wed - for Wednesday,
+        thu - for Thursday,
+        fri - for Friday,
+        sat - for Saturday
+    Example command: '/timetable mon' will give monday's timetable
+/tomorrow - to get tomorrow timetable
+/current - to get current live class
+/next - to get next class
+/start - to get started
+/help - to get help related to bot

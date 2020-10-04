@@ -31,7 +31,11 @@ def build_menu(tt, c=0, n=3, header_buttons=None, footer_buttons=None):
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 FIRST = 0
-ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE = range(9)
+ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE = map(chr, range(9))
+# a, b, c, d, START_OVER = map(chr, range(9, 14))
+(SELECTING_HELP, BOT_HELP, COMMAND_HELP, ABOUT_ME, WHY_NEED_ME,
+ TIMETABLE, TOMORROW, CURRENT, NEXT, WITHOUT_ARGS, WITH_ARGS, START_OVER, BACK, HOME) = map(chr, range(14, 28))
+END = ConversationHandler.END
 warnings.filterwarnings("ignore")
 
 
@@ -281,6 +285,99 @@ def start(update: Update, context: CallbackContext):
     B.send(s, keyboard)
     
     return FIRST
+
+
+def help_command(update: Update, context: CallbackContext):
+    s = "What help do you want?"
+    keyboard = [
+        [
+            InlineKeyboardButton("Bot Help", callback_data=str(BOT_HELP)),
+            InlineKeyboardButton("Commands Help", callback_data=str(COMMAND_HELP))
+        ],
+        [
+            InlineKeyboardButton("Close", callback_data=str(END))
+        ]
+    ]
+    if context.user_data.get(START_OVER):
+        B.set(update, context, 'help', True)
+        B.edit(s, keyboard)
+    else:
+        B.set(update, context, 'help')
+        B.send(s, keyboard)
+    context.user_data[START_OVER] = False
+    return SELECTING_HELP
+
+
+def end(update, context):
+    update.callback_query.answer()
+    update.callback_query.edit_message_text(text='See ya!')
+    return END
+
+
+def home(update, context):
+    context.user_data[START_OVER] = True
+    help_command(update, context)
+    return HOME
+
+
+def back(update, context):
+    context.user_data[START_OVER] = True
+    help_command(update, context)
+    return BACK
+
+
+def bot_help(update: Update, context: CallbackContext):
+    B.set(update, context, 'bot_help', True)
+    s = "Select Option:"
+    keyboard = [
+        [
+            InlineKeyboardButton("About Me", callback_data=str(ABOUT_ME)),
+            InlineKeyboardButton("Why you need me?", callback_data=str(WHY_NEED_ME))
+        ],
+        [
+            InlineKeyboardButton("Close", callback_data=str(END)),
+            InlineKeyboardButton("\U000000AB Back", callback_data=str(BACK))
+        ]
+    ]
+    B.edit(s, keyboard)
+    return BOT_HELP
+
+
+def about_me(update, context):
+    B.set(update, context, 'about_me', True)
+    s = f"Hi! I am {context.bot.first_name} in your service.\nI can give you your class timetable according to your need.\n\n"\
+        "My creator is Kewal Sharma.\nContact him at telegram: @IamKewal.\n"\
+        "Want to create bot like me,\ncheck github repo mentioned below in Github button"
+    keyboard = [
+        [
+            InlineKeyboardButton("Why you need me?", callback_data=str(WHY_NEED_ME)),
+            InlineKeyboardButton("\U000000AB Back", callback_data=str(BACK))
+        ],
+        [
+            InlineKeyboardButton("Github repo", url="https://github.com/imKewal/marie_class_bot")
+        ]
+    ]
+    B.edit(s, keyboard)
+    return BOT_HELP
+
+
+def why_need(update, context):
+    B.set(update, context, 'why_need', True)
+    s = "I knew you had this question in your mind. Lets resolve this.\n\n"\
+        "This bot can be used in PM by searching marie_class_bot and can also be added to class groups."\
+        "It can be used to get timetable of current day or any other day if required. No need to check pdf copy of timetable " \
+        "any more. For every class you had to check in timetable then go to classroom -> find class -> google meet.\n\n"\
+        "But with this bot you just need to type a command and your classes will be there with google meet links.\n"\
+        "Also no need to check current time and today's day, as you are provided with current and next class commands\n"\
+        "So enjoy this awesome bot and provide feedback to the creator at @IamKewal if you like his work."
+    keyboard = [
+        [
+            InlineKeyboardButton("About me", callback_data=str(ABOUT_ME)),
+            InlineKeyboardButton("\U000000AB Back", callback_data=str(BACK))
+        ]
+    ]
+    B.edit(s, keyboard)
+    return BOT_HELP
 
 
 def start_over(update: Update, context: CallbackContext):
@@ -608,8 +705,7 @@ def main():
     
     start_handler = ConversationHandler(
         entry_points=[
-            CommandHandler('start', start),
-            CommandHandler('help', start)
+            CommandHandler('start', start)
         ],
         states={
             FIRST: [
@@ -626,7 +722,7 @@ def main():
         },
         fallbacks=[
             CommandHandler('start', start),
-            CommandHandler('help', start),
+            CommandHandler('help', cancel),
             CommandHandler('timetable', cancel),
             CommandHandler('tomorrow', cancel),
             CommandHandler('current', cancel),
@@ -634,6 +730,44 @@ def main():
         ],
         per_user=False,
         name='start_conversation',
+        persistent=True
+    )
+    bot_help_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(bot_help, pattern='^' + str(BOT_HELP) + '$')],
+        states={
+            BOT_HELP: [
+                CallbackQueryHandler(about_me, pattern='^' + str(ABOUT_ME) + '$'),
+                CallbackQueryHandler(why_need, pattern='^' + str(WHY_NEED_ME) + '$')
+            ],
+            
+        },
+        fallbacks=[
+            CallbackQueryHandler(back, pattern='^' + str(BACK) + '$'),
+            CallbackQueryHandler(home, pattern='^' + str(HOME) + '$')
+        ],
+        map_to_parent={
+            BACK: SELECTING_HELP
+        }
+    )
+    
+    help_handler = ConversationHandler(
+        entry_points=[CommandHandler('help', help_command)],
+        states={
+            SELECTING_HELP: [
+                bot_help_handler,
+                CallbackQueryHandler(end, pattern='^' + str(END) + '$')
+            ]
+        },
+        fallbacks=[
+            CommandHandler('start', cancel),
+            CommandHandler('help', help_command),
+            CommandHandler('timetable', cancel),
+            CommandHandler('tomorrow', cancel),
+            CommandHandler('current', cancel),
+            CommandHandler('next', cancel)
+        ],
+        per_user=False,
+        name='help_conversation',
         persistent=True
     )
     
@@ -750,10 +884,11 @@ def main():
     )
     
     dispatcher.add_handler(start_handler, 1)
-    dispatcher.add_handler(timetable_handler, 2)
-    dispatcher.add_handler(tomorrow_handler, 3)
-    dispatcher.add_handler(current_handler, 4)
-    dispatcher.add_handler(next_handler, 5)
+    dispatcher.add_handler(help_handler, 2)
+    dispatcher.add_handler(timetable_handler, 3)
+    dispatcher.add_handler(tomorrow_handler, 4)
+    dispatcher.add_handler(current_handler, 5)
+    dispatcher.add_handler(next_handler, 6)
     
     updater.start_polling(clean=True)
     updater.idle()

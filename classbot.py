@@ -1,6 +1,5 @@
 import logging
 import warnings
-import os
 from typing import List
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import error, Message as Mes
@@ -71,7 +70,10 @@ class Messages:
         if message.day is not None:
             self.count[message.day] += 1
             if len(self.messages) > 0:
-                context.bot.delete_message(self.messages[self.index].u_m_c, self.messages[self.index].u_m)
+                try:
+                    context.bot.delete_message(self.messages[self.index].u_m_c, self.messages[self.index].u_m)
+                except error.BadRequest:
+                    print("Message to delete not found")
                 self.index += 1
         self.messages.append(message)
     
@@ -82,18 +84,27 @@ class Messages:
                     if value > 1:
                         for index, mess in enumerate(self.messages):
                             if mess.day == key:
-                                context.bot.delete_message(mess.b_m_c, mess.b_m)
+                                try:
+                                    context.bot.delete_message(mess.b_m_c, mess.b_m)
+                                except error.BadRequest:
+                                    print("Message to delete not found")
                                 self.count[mess.day] -= 1
                                 self.messages.pop(index)
                                 self.index -= 1
                                 break
             else:
-                context.bot.delete_message(self.messages[0].b_m_c, self.messages[0].b_m)
-                context.bot.delete_message(self.messages[0].u_m_c, self.messages[0].u_m)
+                try:
+                    context.bot.delete_message(self.messages[0].b_m_c, self.messages[0].b_m)
+                    context.bot.delete_message(self.messages[0].u_m_c, self.messages[0].u_m)
+                except error.BadRequest:
+                    print("Message to delete not found")
                 self.messages.pop(0)
         elif self.message_type == 'help' and len(self.messages) == 1 and cmd == 'help':
-            context.bot.delete_message(self.messages[0].b_m_c, self.messages[0].b_m)
-            context.bot.delete_message(self.messages[0].u_m_c, self.messages[0].u_m)
+            try:
+                context.bot.delete_message(self.messages[0].b_m_c, self.messages[0].b_m)
+                context.bot.delete_message(self.messages[0].u_m_c, self.messages[0].u_m)
+            except error.BadRequest:
+                print("Message to delete not found")
             self.messages.pop(0)
                 
     def __eq__(self, other):

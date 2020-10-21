@@ -46,11 +46,18 @@ def import_timetable(file):
     ttd = {}
     for day, day_tt in enumerate(tt):
         day_dictionary = {}
-        for cn, cl in enumerate(day_tt):
-            if 0 <= cn <= 2:
-                day_dictionary[cn + 1] = cl
-            else:
-                day_dictionary[cn + 2] = cl
+        if day in [1, 2, 3]:
+            for cn, cl in enumerate(day_tt):
+                if 0 <= cn <= 3:
+                    day_dictionary[cn + 1] = cl
+                else:
+                    day_dictionary[cn + 2] = cl
+        else:
+            for cn, cl in enumerate(day_tt):
+                if 0 <= cn <= 2:
+                    day_dictionary[cn + 1] = cl
+                else:
+                    day_dictionary[cn + 2] = cl
         ttd[day + 1] = day_dictionary
     return ttd
 

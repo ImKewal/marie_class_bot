@@ -1,6 +1,6 @@
 .idea/
 __pycache__/
 venv/
-config.py
-classbot
-beta.py
+/config.py
+/beta.py
+/pickle
